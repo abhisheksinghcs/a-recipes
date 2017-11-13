@@ -1,0 +1,58 @@
+Resources:
+  ivyvpc:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      #InstanceTenancy: String
+      Tags:
+        - Key: Name
+          Value: ivy-vpc
+  # Create Public VPC
+  publicsubnetivyvpc:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        #AssignIpv6AddressOnCreation: Boolean
+        #AvailabilityZone: String
+        CidrBlock: 10.0.3.0/24
+        #Ipv6CidrBlock: String
+        MapPublicIpOnLaunch: true
+        Tags:
+          - Key: Name
+            Value: "public-subnet-ivy-vpc"
+        VpcId: !Ref ivyvpc
+
+  myEc2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      # AMI Linux image
+      ImageId: ami-6057e21a
+      InstanceType: t2.micro
+      KeyName: myec2keypair
+      # Refer the security group by ID not by name
+      SecurityGroupIds:
+      - !GetAtt mypublicsecuritygroup.GroupId
+      # SecurityGroups:
+      #   - !Ref mypublicsecuritygroup
+      SubnetId: !Ref publicsubnetivyvpc
+      Tags:
+        - Key: Name
+          Value: ivy-public-instance
+
+  mypublicsecuritygroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupName: publicSecurityGroup
+      GroupDescription: Allow public access to ec2
+      # SecurityGroupEgress:
+      #   - Security Group Rule
+      VpcId: !GetAtt publicsubnetivyvpc.VpcId
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          FromPort: "22"
+          ToPort: "22"
+          CidrIp: "0.0.0.0/0"
+      Tags:
+        - Key: Name
+          Value: Allow Public Admin Access
